@@ -1,0 +1,89 @@
+@Entity
+public class ConferenceRoom {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    // Other attributes like capacity, location, etc.
+    // Getters and setters
+}
+
+@Entity
+public class Booking {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    @ManyToOne
+    private ConferenceRoom room;
+    // Other attributes like user, purpose, etc.
+    // Getters and setters
+}
+
+@Repository
+public interface ConferenceRoomRepository extends JpaRepository<ConferenceRoom, Long> {
+    
+}
+
+// BookingRepository.java
+@Repository
+public interface BookingRepository extends JpaRepository<Booking, Long> {
+    List<Booking> findByRoomAndStartTimeBetween(ConferenceRoom room, LocalDateTime startTime, LocalDateTime endTime);
+    
+}
+
+@Service
+public class ConferenceRoomService {
+    @Autowired
+    private ConferenceRoomRepository conferenceRoomRepository;
+
+    public List<ConferenceRoom> getAllConferenceRooms() {
+        return conferenceRoomRepository.findAll();
+    }
+    
+}
+
+// BookingService.java
+@Service
+public class BookingService {
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    public List<Booking> getBookingsByRoomAndTime(ConferenceRoom room, LocalDateTime startTime, LocalDateTime endTime) {
+        return bookingRepository.findByRoomAndStartTimeBetween(room, startTime, endTime);
+    }
+    
+}
+
+
+@Controller
+@RequestMapping("/conference-rooms")
+public class ConferenceRoomController {
+    @Autowired
+    private ConferenceRoomService conferenceRoomService;
+
+    @GetMapping
+    public String getAllConferenceRooms(Model model) {
+        List<ConferenceRoom> conferenceRooms = conferenceRoomService.getAllConferenceRooms();
+        model.addAttribute("conferenceRooms", conferenceRooms);
+        return "conference_rooms";
+    }
+    
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Conference Rooms</title>
+</head>
+<body>
+    <h1>Conference Rooms</h1>
+    <ul>
+        <th:block th:each="room : ${conferenceRooms}">
+            <li th:text="${room.name}"></li>
+        </th:block>
+    </ul>
+</body>
+</html>
